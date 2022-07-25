@@ -17,11 +17,14 @@ public class TaskProcessorService : BackgroundService
     private IModel _channel;
     private readonly NeotaskContext _context;
 
-    public TaskProcessorService(ILoggerFactory loggerFactory)
+    public TaskProcessorService(IServiceProvider services, ILoggerFactory loggerFactory)
     {
+        Services = services;
         this._logger = loggerFactory.CreateLogger<TaskProcessorService>();
         InitRabbitMQ();
     }
+
+    public IServiceProvider Services { get; }
 
     private void InitRabbitMQ()
     {
@@ -79,11 +82,15 @@ public class TaskProcessorService : BackgroundService
         //_logger.LogInformation($"consumer received {content}");
         //extract task...
         Console.WriteLine($"consumer received {content}");
-        if (_context.Neotasks != null)
+        using (var scope = Services.CreateScope())
         {
-            var neotask = JsonSerializer.Deserialize<Neotask>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            _context.Neotasks.Add(neotask);
-            await _context.SaveChangesAsync();
+            var _context = scope.ServiceProvider.GetRequiredService<NeotaskContext>();
+            if (_context.Neotasks != null)
+            {
+                var neotask = JsonSerializer.Deserialize<Neotask>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                _context.Neotasks.Add(neotask);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 

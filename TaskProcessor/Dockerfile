@@ -1,7 +1,5 @@
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS base
 WORKDIR /app
-ENV RABBITMQ_HOST localhost
-ENV RABBITMQ_PORT 31672
 EXPOSE 5001
 
 ENV ASPNETCORE_URLS=http://+:5001
